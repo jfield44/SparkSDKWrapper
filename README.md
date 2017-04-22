@@ -11,10 +11,10 @@ What that means is that you just need to pass the SparkSDKWrapper your Cisco Spa
 In order to use the Spark SDK Wrapper you need to have an existing iOS project configured to use the Cisco Spark iOS SDK, you can find instructions on how to do that [here](https://github.com/ciscospark/spark-ios-sdk) .
 
 Download or clone this repository and drag the following files into your Xcode Project:
-	* *SparkMediaView.swift*
-	* *SparkMediaHelper.swift*
-	* *SparkMediaView.xib*
-	* *SparkMediaSDKAssets.xcassets*
+ * SparkMediaView.swift
+ * SparkMediaHelper.swift
+ * SparkMediaView.xib
+ * SparkMediaSDKAssets.xcassets
 
 *Important:* Apple now require that you provide a justification text to the end user when you request to use the Camera and Microphone on their device. In order to satisfy this requirement you need to provide the justification text. 
 
