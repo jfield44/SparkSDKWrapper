@@ -46,7 +46,8 @@ class ViewController: UIViewController, SparkMediaViewDelegate {
 import UIKit
 
 class ViewController: UIViewController, SparkMediaViewDelegate {
-// YOUR IMPLEMENTATION
+
+    // YOUR IMPLEMENTATION
 
     func callDidComplete() {
         // Add your handling logic here
@@ -91,7 +92,8 @@ class ViewController: UIViewController, SparkMediaViewDelegate {
 import UIKit
 
 class ViewController: UIViewController, SparkMediaViewDelegate {
- // YOUR IMPLEMENTATION
+ 
+  // YOUR IMPLEMENTATION
 
   func startCall() {
   	// Who are you?
