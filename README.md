@@ -7,6 +7,7 @@ The Spark SDK Wrapper is an unofficial convenience library written on top of the
 This wrapper handles layout of the video streams for local and remote participants, the call setup process, in call functionality such as muting, and switching the camera as well as hanging up the call.
 What that means is that you just need to pass the SparkSDKWrapper your Cisco Spark authentication credentials and the address of the recipient and you will be all set.
 
+
 ## Requirements
 In order to use the Spark SDK Wrapper you need to have an existing iOS project configured to use the Cisco Spark iOS SDK, you can find instructions on how to do that [here](https://github.com/ciscospark/spark-ios-sdk) .
 
@@ -25,10 +26,12 @@ To do this, open the info.plist file that resides inside of your Xcode project. 
 
 *If you fail to do the above step, the app will crash* 
 
+
 ## Implementation
 The SparkSDKWrapper uses a UIViewController as a drop in component to display the Video/Voice call.  As a result of this, to use this library you need to ensure that the view from which you will start the call is part of a *UINavigationController*.
 
 Place the following code wherever at the appropriate point in your project to begin the call. For a better user experience you should consider showing a popup informing the user that they are about to begin a call with an option to cancel.
+
 
 #### Implement the `SparkMediaViewDelegate` Protocol in your ViewController, this is how you will be notified when a call has completed or an error occurred.
 
@@ -39,6 +42,7 @@ class ViewController: UIViewController, SparkMediaViewDelegate {
  // YOUR IMPLEMENTATION
 }
 ```
+
 
 #### Implement the two mandatory delegate functions `callDidComplete()` and `callFailed(withError: String)`
 
@@ -59,6 +63,7 @@ class ViewController: UIViewController, SparkMediaViewDelegate {
 
 }
 ```
+
 
 #### To start a Video Call:
 ```swift
@@ -87,6 +92,7 @@ class ViewController: UIViewController, SparkMediaViewDelegate {
 }
 ```
 
+
 #### To start a Voice Call:
 ```swift
 import UIKit
@@ -114,9 +120,13 @@ class ViewController: UIViewController, SparkMediaViewDelegate {
 }
 ```
 
+
 Thats it… you are all set to start making awesome video and voice calls using the Cisco Spark SDK.
 
+
 Its likely that you will want to customise the way that the calling experience looks to suit your app or business. You can do this using the SparkMediaView.swift file for the implementation and the SparkMediaView.xib for the GUI.
+
+
 
 ## License
 SparkSDKWrapper is available under the MIT license. See the LICENSE file for more info.
