@@ -36,7 +36,7 @@ Place the following code wherever at the appropriate point in your project to be
 import UIKit
 
 class ViewController: UIViewController, SparkMediaViewDelegate {
-// YOUR IMPLEMENTATION
+ // YOUR IMPLEMENTATION
 }
 ```
 
@@ -87,7 +87,7 @@ class ViewController: UIViewController, SparkMediaViewDelegate {
 }
 ```
 
-#### To start an Voice Call:
+#### To start a Voice Call:
 ```swift
 import UIKit
 
