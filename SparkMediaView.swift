@@ -36,7 +36,7 @@ import SparkSDK
  */
 public protocol SparkMediaViewDelegate: class {
     func callDidComplete()
-    func callFailedWithError()
+    func callFailed(withError: String)
 }
 
 public class SparkMediaView: UIViewController, CallObserver {
@@ -78,7 +78,19 @@ public class SparkMediaView: UIViewController, CallObserver {
         self.apiKey = String()
         self.authenticationType = .appId
         super.init(coder: aDecoder)
+    }
+    
+    override public func viewDidLoad() {
+        super.viewDidLoad()
+        let tapGestureRecogniser = UITapGestureRecognizer.init(target: self, action: #selector(tap))
+        self.remoteMediaView.addGestureRecognizer(tapGestureRecogniser)
         
+        let panGestureRecogniser = UIPanGestureRecognizer.init(target: self, action: #selector(repositionSelfView))
+        self.localMediaView.addGestureRecognizer(panGestureRecogniser)
+    }
+    
+    override public func didReceiveMemoryWarning() {
+        super.didReceiveMemoryWarning()
     }
     
     //Convenience Functions
@@ -101,29 +113,12 @@ public class SparkMediaView: UIViewController, CallObserver {
             if attempted {
                 self.registerDeviceWithSpark(mediaAccessType: mediaAccessType, successfulRegistration: { (success) in
                     self.registerForSparkCallStateNotifications()
-                    //self.showActivityIndicator(initialText: "Connecting Call")
                     self.startSparkCallTo(recipient: recipient, mediaAccessType: mediaAccessType)
                 }) { (error) in
-                    SwiftMessages.show(view: SparkMediaHelper.unableToRegisterWithSparkView())
+                    self.delegate?.callFailed(withError: "Unable to register with Spark, check your access token.")
                 }
             }
         }
-    }
-    
-    override public func viewDidLoad() {
-        super.viewDidLoad()
-        self.localMediaView = MediaRenderView(frame: CGRect(x: 0, y: 0, width: 100, height: 100))
-        self.remoteMediaView = MediaRenderView(frame: CGRect(x: 50, y: 0, width: 200, height: 200))
-//        let tapGestureRecogniser = UITapGestureRecognizer.init(target: self, action: #selector(tap))
-//        self.remoteMediaView.addGestureRecognizer(tapGestureRecogniser)
-//        
-//        let panGestureRecogniser = UIPanGestureRecognizer.init(target: self, action: #selector(repositionSelfView))
-//        self.localMediaView.addGestureRecognizer(panGestureRecogniser)
-    }
-    
-    override public func didReceiveMemoryWarning() {
-        super.didReceiveMemoryWarning()
-        // Dispose of any resources that can be recreated.
     }
     
     /**
@@ -136,14 +131,15 @@ public class SparkMediaView: UIViewController, CallObserver {
             authenticationAttempted(true)
         }
         else if authType == .appId {
-            //            let jwtAuthStrategy = JWTAuthStrategy()
-            //            let spark = Spark(authenticationStrategy: jwtAuthStrategy)
-            //            if !jwtAuthStrategy.authorized {
-            //                jwtAuthStrategy.authorizedWith(jwt: apiKey)
-            //                if spark.authenticationStrategy.authorized {
-            //                    print("Not auth")
-            //                }
-            //            }
+            // TODO
+            // let jwtAuthStrategy = JWTAuthStrategy()
+            // let spark = Spark(authenticationStrategy: jwtAuthStrategy)
+            // if !jwtAuthStrategy.authorized {
+            //    jwtAuthStrategy.authorizedWith(jwt: apiKey)
+            // if spark.authenticationStrategy.authorized {
+            //    print("Not auth")
+            //    }
+            //}
             authenticationAttempted(true)
         }
         Spark.phone.disableVideoCodecActivation()
@@ -182,12 +178,19 @@ public class SparkMediaView: UIViewController, CallObserver {
      - parameter mediaAccessType: The type of Media that will be sent to the remote party (Audio or Audio Video)
      */
     func startSparkCallTo(recipient: String, mediaAccessType: Phone.MediaAccessType){
+        self.startCallTimer()
         Spark.phone.defaultFacingMode = Call.FacingMode.User
-        let call = Spark.phone.dial(recipient, option: MediaOption.audioVideo(local: self.localMediaView, remote: self.remoteMediaView)) { success in
+        let call = Spark.phone.dial(recipient, option: mediaAccessType == .audio ? MediaOption.audioOnly : MediaOption.audioVideo(local: self.localMediaView, remote: self.remoteMediaView)) { success in
             if success {
+                if mediaAccessType == .audio {
+                    self.callTimerLabel.isHidden = false
+                    self.rotateCameraButton.isEnabled = false
+                    self.toggleButtonVisibilityState()
+                }
             }
             else {
                 print("Failed to dial call.")
+                self.delegate?.callFailed(withError: "Failed to Dial, check your recipient has a valid address and that you have internet connectivity.")
             }
         }
         self.currentCall = call
@@ -195,11 +198,10 @@ public class SparkMediaView: UIViewController, CallObserver {
     
     // Call Notifications
     public func callDidBeginRinging(_ call: Call) {
-        
+        // Your custom logic
     }
     
     public func callDidDisconnect(_ call: Call, disconnectionType: DisconnectionType) {
-        self.hideActivityView()
         self.dismiss(animated: true, completion: {
             self.delegate?.callDidComplete()
         })
@@ -207,22 +209,20 @@ public class SparkMediaView: UIViewController, CallObserver {
     
     // Button Actions
     @IBAction func rotateCameraPressed(_ sender: UIButton) {
-        self.present(self.alertMenu(isMuted: true, mediaAccessType: .audio), animated: true, completion: nil
-        )
-        //        self.currentCall.toggleFacingMode()
-        //        print(currentCall.facingMode.hashValue)
-        //        if self.currentCall.facingMode.hashValue == 0 {
-        //            self.rotateCameraButton.setImage(UIImage(named: "rotate"), for: UIControlState())
-        //        }
-        //        else if self.currentCall.facingMode.hashValue == 1{
-        //            self.rotateCameraButton.setImage(UIImage(named: "rotateActive"), for: UIControlState())
-        //        }
+        self.currentCall.toggleFacingMode()
+        if self.currentCall.facingMode.hashValue == 0 {
+            self.rotateCameraButton.setImage(UIImage(named: "rotate"), for: UIControlState())
+        }
+        else if self.currentCall.facingMode.hashValue == 1{
+            self.rotateCameraButton.setImage(UIImage(named: "rotateActive"), for: UIControlState())
+        }
     }
     
     @IBAction func hangupPressed(_ sender: UIButton) {
+        self.view.backgroundColor = UIColor.black
+        self.callTimerLabel.isHidden = true
         self.currentCall.hangup() { success in
             if !success {
-                //Mixpanel.mainInstance().track(event: "Failed to Hang Up Call Locally", properties: ["Hangup" : "Failed"])
                 print("Failed to hangup call.")
             } else {
                 self.currentCall = nil
@@ -275,71 +275,11 @@ public class SparkMediaView: UIViewController, CallObserver {
         
     }
     
-    //Activity Indicator
-    func showActivityIndicator(initialText: String) {
-        ALLoadingView.manager.blurredBackground = true
-        ALLoadingView.manager.messageText = initialText
-        ALLoadingView.manager.showLoadingView(ofType: .messageWithIndicatorAndCancelButton, windowMode: .fullscreen)
-        ALLoadingView.manager.cancelCallback = {
-            ALLoadingView.manager.hideLoadingView()
-            self.dismiss(animated: true, completion: {
-                self.delegate?.callDidComplete()
-            })
-        }
-    }
-    
-    func updateActivityIndicatorText(updatedText: String){
-        ALLoadingView.manager.messageText = updatedText
-    }
-    
-    func hideActivityView() {
-        self.remoteMediaView.backgroundColor = UIColor.black
-        ALLoadingView.manager.hideLoadingView()
-    }
-    
     func startCallTimer() {
         self.callTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true, block: { (timer) in
             self.currentCallDuration += 1
             self.callTimerLabel.text = SparkMediaHelper.timeStringFromSeconds(currrentCallDuration: self.currentCallDuration)
         })
-    }
-    
-    func alertMenu(isMuted: Bool, mediaAccessType: Phone.MediaAccessType) -> UIAlertController {
-        let alertController = UIAlertController(title: "Controls", message: "", preferredStyle: .alert)
-        
-        let rotateCameraAction = UIAlertAction(title: "Rotate Camera", style: .default) { (action) in
-            self.currentCall.toggleFacingMode()
-            //self.rotateCameraPressed(UIButton())
-        }
-        alertController.addAction(rotateCameraAction)
-        
-        //        let mediaTypeSwitchTitle = self.currentCall.sendingVideo ? "Switch to an Audio Call" : "Switch to a Video Call"
-        //        let mediaTypeSwitchAction = UIAlertAction(title: mediaTypeSwitchTitle, style: .default) { (action) in
-        //            if self.currentCall.sendingVideo {
-        //                self.currentCall.toggleSendingVideo()
-        //                self.currentCall.toggleReceivingVideo()
-        //                self.localMediaView.isHidden = true
-        //                self.remoteMediaView.isHidden = true
-        //            }
-        //            else if self.currentCall.sendingAudio {
-        //                self.currentCall.toggleSendingVideo()
-        //                self.currentCall.toggleReceivingVideo()
-        //                self.localMediaView.isHidden = false
-        //                self.remoteMediaView.isHidden = false
-        //            }
-        //        }
-        //        alertController.addAction(mediaTypeSwitchAction)
-        
-        //        let loudSpeakerSwitchTitle = self.currentCall.loudSpeaker ? "Enable Loudspeaker" : "Disable Loudspeaker"
-        //        let loudSpeakerSwitchAction = UIAlertAction(title: loudSpeakerSwitchTitle, style: .default) { (action) in
-        //            self.currentCall.toggleLoudSpeaker()
-        //        }
-        //        alertController.addAction(loudSpeakerSwitchAction)
-        
-        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel) { (action) in }
-        alertController.addAction(cancelAction)
-        
-        return alertController
     }
     
     fileprivate func showPhoneRegisterFailAlert() {
