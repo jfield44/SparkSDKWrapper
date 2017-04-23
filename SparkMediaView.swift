@@ -28,8 +28,6 @@
 
 import UIKit
 import SparkSDK
-import SwiftMessages
-import ALLoadingView
 
 /**
  Provides notifications when significant events take place during a video call
