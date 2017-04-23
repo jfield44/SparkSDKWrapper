@@ -7,17 +7,8 @@
 //
 
 import UIKit
-import SwiftMessages
 
 public class SparkMediaHelper: NSObject {
-    
-    static func unableToRegisterWithSparkView() -> UIView {
-        let view = MessageView.viewFromNib(layout: .CardView)
-        view.configureTheme(.error)
-        view.configureDropShadow()
-        view.configureContent(title: "Error", body: "Unable to register with Spark, check your access token.")
-        return view
-    }
     
     static func timeStringFromSeconds(currrentCallDuration: Int) -> String {
         let minutes:Int = (currrentCallDuration / 60) % 60
